@@ -1,10 +1,24 @@
+"""
+Программа «Морской бой».
+«Морской бой» — игра, в которой игрок и компьютер по очереди нажимают на клетки неизвестной им карте соперника.
+Если у соперника по этим координатам имеется корабль, то корабль или его часть «топится».
+Цель игрока — первым потопить все корабли противника.
+"""
+
+
 from tkinter import *
-from tkinter import messagebox
 import time
 import random
 
 
 def draw_table(offset=0):
+    """
+    Рисует игровое поле
+
+    Args:
+        offset (int): Смещение поля на холсте по координате x
+    """
+
     global canvas
     for i in range(field_size['x'] + 1):
         canvas.create_line(offset + step['x'] * i, 0, offset + step['x'] * i, canvas_size['y'])
@@ -12,8 +26,19 @@ def draw_table(offset=0):
         canvas.create_line(offset, step['y'] * i, offset + canvas_size['x'], step['y'] * i)
 
 
-def change_current_label():
-    global player_label, computer_label, current_label
+def change_current_label(player_label, computer_label, current_label):
+    """
+    Изменяет параметры надписей
+
+    Args:
+        player_label (Label): Надпись игрока
+        computer_label (Label): Надпись компьютера
+        current_label (Label): Надпись о текущем ходе
+
+    Raises:
+        TypeError: Если хотя бы один переданный аргумент равен None
+    """
+
     if player_label is None or computer_label is None or current_label is None:
         raise TypeError('Labels are undefined')
     else:
@@ -30,6 +55,10 @@ def change_current_label():
 
 
 def show_player_ships():
+    """
+    Показывает корабли игрока
+    """
+
     global canvas_objects
     for i in range(field_size['x']):
         for j in range(field_size['y']):
@@ -43,6 +72,10 @@ def show_player_ships():
 
 
 def show_computer_ships():
+    """
+    Показывает корабли компьютера.
+    """
+
     global canvas_objects
     for i in range(field_size['x']):
         for j in range(field_size['y']):
@@ -56,15 +89,34 @@ def show_computer_ships():
                 canvas_objects.append(rectangle)
 
 
-def generate_ships():
-    ships = [[0 for i in range(field_size['x'])] for j in range(field_size['y'])]
-    field = [[0 for i in range(-1, field_size['x'] + 1)] for j in range(-1, field_size['y'] + 1)]
+def generate_ships(size):
+    """
+    Генерирует поле заданного размера с расставленными на нём кораблями
+
+    Args:
+        size (dict): Размеры поля.
+            Словарь, ключами которого являются названия осей (x и y), а значениями - количество клеток по заданной оси
+        computer_label (Label): Надпись компьютера
+        current_label (Label): Надпись о текущем ходе
+
+    Returns:
+        list[list[int]]: Сгенерированное поле
+
+    Raises:
+        ValueError: Если размеры поля не имеют возможности вместить в себя все корабли из классической игры
+    """
+
+    if size['x'] * size['y'] < 100 or size['x'] < 4 or size['y'] < 4:
+        raise ValueError('Wrong field size')
+
+    ships = [[0 for i in range(size['x'])] for j in range(size['y'])]
+    field = [[0 for i in range(-1, size['x'] + 1)] for j in range(-1, size['y'] + 1)]
 
     for ship in ships_list:
         able_to_add = False
         while not able_to_add:
-            x = random.randrange(field_size['x'])
-            y = random.randrange(field_size['y'])
+            x = random.randrange(size['x'])
+            y = random.randrange(size['y'])
             direction = random.choice([{'dx': 1, 'dy': 0}, {'dx': 0, 'dy': 1}, {'dx': -1, 'dy': 0}, {'dx': 0, 'dy': -1}])
             up_left_angle = {'x': 0, 'y': 0}
             down_right_angle = {'x': 0, 'y': 0}
@@ -80,7 +132,7 @@ def generate_ships():
             else:
                 up_left_angle = {'x': x - 1, 'y': y - ship}
                 down_right_angle = {'x': x + 1, 'y': y + 1}
-            if up_left_angle['x'] < -1 or up_left_angle['y'] < -1 or down_right_angle['x'] > field_size['x'] or down_right_angle['y'] > field_size['y']:
+            if up_left_angle['x'] < -1 or up_left_angle['y'] < -1 or down_right_angle['x'] > size['x'] or down_right_angle['y'] > size['y']:
                 continue
             able_to_add = True
             xo = up_left_angle['x']
@@ -108,18 +160,32 @@ def generate_ships():
 
 
 def begin_again():
+    """
+    Начинает игру сначала
+    """
+
     global canvas_objects, player_ships, computer_ships, player_clicks, computer_clicks, boom
     for element in canvas_objects:
         canvas.delete(element)
     canvas_objects = []
-    player_ships = generate_ships()
-    computer_ships = generate_ships()
+    player_ships = generate_ships(field_size)
+    computer_ships = generate_ships(field_size)
     player_clicks = [[-1 for i in range(field_size['x'])] for j in range(field_size['y'])]
     computer_clicks = [[-1 for i in range(field_size['x'])] for j in range(field_size['y'])]
     boom = [[0 for i in range(field_size['x'])] for j in range(field_size['y'])]
 
 
 def draw_point(x, y, ships, offset=0):
+    """
+    Рисует точку, указывающую место, в которое был произведён выстрел
+
+    Args:
+        x (int): Координата x выстрела
+        y (int): Координата y выстрела
+        ships (list[list[int]]): Карта расположения кораблей
+        offset (int): Смещение поля на холсте по координате x
+    """
+
     global canvas_objects
     if ships[y][x] == 0:
         point = canvas.create_oval(x * step['x'] + offset, y * step['y'], (x + 1) * step['x'] + offset,
@@ -131,17 +197,35 @@ def draw_point(x, y, ships, offset=0):
         canvas_objects.append(point)
 
 
-def check_winner(ships, clicks):
+def check_winner(size, ships, clicks):
+    """
+    Проверяет победил ли кто-либо из игроков
+
+    Args:
+        size (dict): Размеры поля.
+            Словарь, ключами которого являются названия осей (x и y), а значениями - количество клеток по заданной оси
+        ships (list[list[int]]): Карта расположения кораблей
+        clicks (list[list[int]]): Список нажатий на карту
+
+    Returns:
+        bool: True, если все корабли соперника «потоплены»
+    """
+
     win = True
-    for i in range(field_size['x']):
-        for j in range(field_size['y']):
+    for i in range(size['x']):
+        for j in range(size['y']):
             if ships[j][i] > 0:
                 if clicks[j][i] == -1:
                     win = False
+                    break
     return win
 
 
 def computer_turn():
+    """
+    Ход компьютера
+    """
+
     global window
     global player_turn
     global player_clicks, computer_clicks
@@ -160,8 +244,8 @@ def computer_turn():
         ip_y = random.randrange(0, field_size['y'])
         # some code
     player_clicks[ip_y][ip_x] = 7
-    draw_point(ip_x, ip_y, player_ships)
-    if check_winner(player_ships, player_clicks):
+    draw_point(ip_x, ip_y, )
+    if check_winner(field_size, player_ships, player_clicks):
         winner = 'Вы проиграли'
         print(winner)
         player_clicks = [[10 for i in range(field_size['x'])] for i in range(field_size['y'])]
@@ -179,6 +263,13 @@ def computer_turn():
 
 
 def add_to_all(event):
+    """
+    Ход игрока
+
+    Args:
+        event ({num}): Событие (нажатие на кнопку мыши)
+    """
+
     global player_turn
     global player_ships, computer_ships
     global player_clicks, computer_clicks
@@ -197,7 +288,7 @@ def add_to_all(event):
             if computer_ships[ip_y][ip_x] == 0:
                 player_turn = False
             draw_point(ip_x, ip_y, player_ships)
-            if check_winner(player_ships, player_clicks):
+            if check_winner(field_size, player_ships, player_clicks):
                 player_turn = True
                 winner = 'Вы проиграли'
                 print(winner)
@@ -219,7 +310,7 @@ def add_to_all(event):
             computer_clicks[ip_y][ip_x - field_size['x'] - 4] = mouse_button
             player_turn = True
             draw_point(ip_x - field_size['x'] - 4, ip_y, computer_ships, canvas_size['x'] + menu['x'])
-            if check_winner(computer_ships, computer_clicks):
+            if check_winner(field_size, computer_ships, computer_clicks):
                 player_turn = False
                 winner = 'Вы победили!!!'
                 print(winner)
@@ -236,12 +327,16 @@ def add_to_all(event):
                 text = canvas.create_text(step['x'] * 10, step['y'] * 5, text=winner, font=('Arial', 50), justify=CENTER)
                 canvas_objects.append(text)
             else:
-                change_current_label()
+                change_current_label(player_label, computer_label, current_label)
                 computer_turn()
-    change_current_label()
+    change_current_label(player_label, computer_label, current_label)
 
 
 def main():
+    """
+    Главная функция. Запускает игру
+    """
+
     global player_ships, computer_ships
     global canvas_objects
     global player_clicks, computer_clicks
@@ -279,7 +374,7 @@ def main():
     player_label.configure(bg='#f0f0f0')
     current_label = Label(window, text='@@@@@@@', font=('Helvetica', 16))
     current_label.place(x=canvas_size['x'] + menu['x'] // 2 - current_label.winfo_reqwidth() // 2, y=canvas_size['y'])
-    change_current_label()
+    change_current_label(player_label, computer_label, current_label)
 
     btn_show_player_ships = Button(window, text='Показать мое поле', command=show_player_ships)
     btn_show_player_ships.place(x=canvas_size['x'] + 20, y=30)
@@ -291,8 +386,8 @@ def main():
     canvas.bind_all("<Button-1>", add_to_all) # ЛКМ
     canvas.bind_all("<Button-3>", add_to_all) # ПКМ
 
-    player_ships = generate_ships()
-    computer_ships = generate_ships()
+    player_ships = generate_ships(field_size)
+    computer_ships = generate_ships(field_size)
 
     while app_running:
         if app_running:
