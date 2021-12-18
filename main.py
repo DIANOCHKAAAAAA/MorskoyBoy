@@ -244,7 +244,7 @@ def computer_turn():
         ip_y = random.randrange(0, field_size['y'])
         # some code
     player_clicks[ip_y][ip_x] = 7
-    draw_point(ip_x, ip_y, )
+    draw_point(ip_x, ip_y, player_ships )
     if check_winner(field_size, player_ships, player_clicks):
         winner = 'Вы проиграли'
         print(winner)
