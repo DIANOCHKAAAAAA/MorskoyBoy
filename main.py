@@ -264,7 +264,8 @@ def computer_turn():
 
 def add_to_all(event):
     """
-    Ход игрока
+    Ход игрока.
+        https://github.com/WISEPLAT/python-code.git
 
     Args:
         event ({num}): Событие (нажатие на кнопку мыши)
