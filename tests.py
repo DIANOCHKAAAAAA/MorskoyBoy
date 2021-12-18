@@ -28,9 +28,13 @@ class TestGenerateShips(unittest.TestCase):
     def test_wrong_completing(self):
         with self.assertRaises(ValueError):
             generate_ships({'x': 0, 'y': 0})
+        with self.assertRaises(ValueError):
             generate_ships({'x': -1, 'y': -1})
+        with self.assertRaises(ValueError):
             generate_ships({'x': 5, 'y': 5})
+        with self.assertRaises(ValueError):
             generate_ships({'x': 100, 'y': 3})
+        with self.assertRaises(ValueError):
             generate_ships({'x': 3, 'y': 100})
 
 
